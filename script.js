@@ -49,6 +49,7 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
+let announcedTrips = [];
 const SHEET_URL =
 "https://opensheet.elk.sh/1pa-yjnRWAgdpZvwo9ix6dH6TAusZaGFFifaxvfRQC1A/JADWAL";
 
@@ -62,6 +63,45 @@ async function loadSchedule(){
         let html = "";
 
         data.forEach((item,index)=>{
+            const sekarang = new Date();
+
+const jamBus = item["Jam"];
+
+if(jamBus){
+
+    const parts = jamBus.split(":");
+
+    const waktuBus = new Date();
+
+    waktuBus.setHours(
+        parseInt(parts[0]),
+        parseInt(parts[1]),
+        0,
+        0
+    );
+
+    const selisihMenit =
+    Math.floor(
+        (waktuBus - sekarang)
+        /1000/60
+    );
+
+    const tripKey =
+    item["Kendaraan"] + "-" + item["Jam"];
+
+    if(
+        selisihMenit <= 15 &&
+        selisihMenit >= 14 &&
+        !announcedTrips.includes(tripKey)
+    ){
+
+        announceBus(item);
+
+        announcedTrips.push(tripKey);
+
+    }
+
+}
 
             let statusClass = "";
 
@@ -110,6 +150,22 @@ new Date().toLocaleTimeString("id-ID");
 
 }
 
+function announceBus(item){
+
+    const text =
+    `Perhatian. Bus ${item["PO Bus"]} tujuan ${item["Tujuan"]} dengan nomor kendaraan ${item["Kendaraan"]} dijadwalkan berangkat pukul ${item["Jam"]}. Penumpang dipersilakan menuju ruang tunggu keberangkatan dan mempersiapkan tiket serta barang bawaan masing-masing. Terima kasih.`;
+
+    const speech =
+    new SpeechSynthesisUtterance(text);
+
+    speech.lang = "id-ID";
+    speech.rate = 0.9;
+    speech.volume = 1;
+
+    window.speechSynthesis.speak(speech);
+
+}
 loadSchedule();
 
 setInterval(loadSchedule,15000);
+
